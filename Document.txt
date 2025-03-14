@@ -1,0 +1,30 @@
+1- Create DynamoDB table:
+    
+    table name: Raffle
+    partition-key: Email (string)
+    object: Name (string) , Email (string), Phone (string) , Won (string)
+
+--------------------------------------------------------------------
+
+2- Create lambda functions:
+    
+    apply: put object in dynamodb table
+    count: get number of objects 
+    draw: choose three random objects and list them as winners
+
+--------------------------------------------------------------------
+
+3- Create API Gateway:
+
+    Create domain name
+    Create certificate for this domain to secure it by using the service ACM 
+    Add the domain to the api gateway as a custom domain 
+    Create a dns record link domain with the api endpoint
+    Alias to api gateway
+    custom domain api mapping 
+    connect lambda function with api gateway 
+
+--------------------------------------------------------------------
+
+4- Enable mutual tls authentication for api gateway 
+
