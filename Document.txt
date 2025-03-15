@@ -8,6 +8,7 @@
 
 2- Create lambda functions:
     
+    create IAM role to access dynamodb and create logs by using cloudwatch
     apply: put object in dynamodb table
     count: get number of objects 
     draw: choose three random objects and list them as winners
