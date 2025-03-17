@@ -1,43 +1,42 @@
-const AWS = require('aws-sdk');
-const dynamoDb = new AWS.DynamoDB.DocumentClient();
+const { DynamoDBClient, PutItemCommand } = require("@aws-sdk/client-dynamodb");
+
+const client = new DynamoDBClient({ region: "us-east-1" });
 
 exports.handler = async (event) => {
-    const { email, name, phone, won } = JSON.parse(event.body); // Parse JSON payload
+  console.log("Received event: ", JSON.stringify(event, null, 2));
 
-    // Check if all fields are present
-    if (!email || !name || !phone || !won) {
-        console.log('Validation failed: missing fields');
-        return {
-            statusCode: 400,
-            body: JSON.stringify({ message: 'Missing required fields.' }),
-        };
-    }
+  try {
+    // Parse incoming data
+    const { email, name, phone } = JSON.parse(event.body);  
 
+    // Set the default value for 'won'
+    const won = "no";
+
+    // Prepare the data for DynamoDB (Ensure correct attribute structure)
     const params = {
-        TableName: 'dynamodb-table-lottery', // DynamoDB table name
-        Item: {
-            email: email,
-            name: name,
-            phone: phone,
-            won: won,
-            timestamp: new Date().toISOString(), // Add timestamp for record
-        },
+      TableName: "dynamodb-table-lottery",
+      Item: {
+        email: { S: email },  
+        name: { S: name },    
+        phone: { S: phone },  
+        won: { S: won },      
+      },
     };
 
-    try {
-        // Store the data in DynamoDB
-        await dynamoDb.put(params).promise();
-        console.log(`Data successfully saved for email: ${email}`);
+    // Save data to DynamoDB
+    const command = new PutItemCommand(params);
+    await client.send(command);
 
-        return {
-            statusCode: 200,
-            body: JSON.stringify({ message: 'Data saved successfully!' }),
-        };
-    } catch (error) {
-        console.error('Error storing data in DynamoDB:', error);
-        return {
-            statusCode: 500,
-            body: JSON.stringify({ message: 'Error saving data.' }),
-        };
-    }
+    // Return success response
+    return {
+      statusCode: 200,
+      body: JSON.stringify({ message: "Data successfully saved to DynamoDB." }),
+    };
+  } catch (error) {
+    console.error("Error saving data to DynamoDB:", error);
+    return {
+      statusCode: 500,
+      body: JSON.stringify({ message: "Failed to save data to DynamoDB.", error: error.message }),
+    };
+  }
 };
