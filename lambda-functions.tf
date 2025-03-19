@@ -10,7 +10,11 @@ data "archive_file" "lambda-count" {
   output_path = "lambda-count-function.zip"
 }
 
-
+data "archive_file" "lambda-draw" {
+  type        = "zip"
+  source_file = "draw-function.js"
+  output_path = "lambda-draw-function.zip"
+}
 
 resource "aws_lambda_function" "apply-function" {
   filename      = "lambda-apply-function.zip"
@@ -33,6 +37,21 @@ resource "aws_lambda_function" "count-function" {
   role          = aws_iam_role.lambda_dynamodb_role.arn
   handler       = "count-function.handler"
   source_code_hash = data.archive_file.lambda-count.output_base64sha256
+  runtime = "nodejs18.x"
+
+  environment {
+    variables = {
+      foo = "bar"
+    }
+  }
+}
+
+resource "aws_lambda_function" "draw-function" {
+  filename      = "lambda-draw-function.zip"
+  function_name = "draw-function"
+  role          = aws_iam_role.lambda_dynamodb_role.arn
+  handler       = "draw-function.handler"
+  source_code_hash = data.archive_file.lambda-draw.output_base64sha256
   runtime = "nodejs18.x"
 
   environment {

@@ -6,20 +6,32 @@ exports.handler = async (event) => {
   console.log("Received event: ", JSON.stringify(event, null, 2));
 
   try {
-    // Parse incoming data
-    const { email, name, phone } = JSON.parse(event.body);  
+    let requestBody;
+
+    // Handle both API Gateway and direct Lambda invocations
+    if (event.body) {
+      requestBody = typeof event.body === "string" ? JSON.parse(event.body) : event.body;
+    } else {
+      requestBody = event; // If directly invoked (e.g., via test event in AWS Lambda)
+    }
+
+    const { email, name, phone } = requestBody;
+
+    if (!email || !name || !phone) {
+      throw new Error("Missing required fields: email, name, or phone");
+    }
 
     // Set the default value for 'won'
     const won = "no";
 
-    // Prepare the data for DynamoDB (Ensure correct attribute structure)
+    // Prepare the data for DynamoDB
     const params = {
       TableName: "dynamodb-table-lottery",
       Item: {
-        email: { S: email },  
-        name: { S: name },    
-        phone: { S: phone },  
-        won: { S: won },      
+        email: { S: email },
+        name: { S: name },
+        phone: { S: phone },
+        won: { S: won },
       },
     };
 
@@ -27,7 +39,6 @@ exports.handler = async (event) => {
     const command = new PutItemCommand(params);
     await client.send(command);
 
-    // Return success response
     return {
       statusCode: 200,
       body: JSON.stringify({ message: "Data successfully saved to DynamoDB." }),
