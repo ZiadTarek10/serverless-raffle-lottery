@@ -17,7 +17,7 @@
 
 3- Create API Gateway:
 
-    Create domain name
+    Create domain name -> must be done on manually or by using aws cli
     Create certificate for this domain to secure it by using the service ACM 
     Add the domain to the api gateway as a custom domain 
     Create a dns record link domain with the api endpoint
@@ -29,3 +29,11 @@
 
 4- Enable mutual tls authentication for api gateway 
 
+
+
+
+
+
+Manuals
+add trigger
+add the custome domain name to the api
