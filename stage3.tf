@@ -60,6 +60,9 @@ resource "aws_apigatewayv2_domain_name" "custom_domain_name" {
     endpoint_type   = "REGIONAL"
     security_policy = "TLS_1_2"
   }
+  mutual_tls_authentication {
+    truststore_uri     = "s3://raffle-ca-api-gateway/RootCA.pem"
+  }
 }
 
 

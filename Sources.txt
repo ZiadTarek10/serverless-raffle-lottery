@@ -1,0 +1,3 @@
+AWS mutual authentication
+https://aws.amazon.com/blogs/compute/introducing-mutual-tls-authentication-for-amazon-api-gateway/
+
