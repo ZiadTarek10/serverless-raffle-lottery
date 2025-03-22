@@ -14,3 +14,4 @@ resource "aws_s3_object" "rootca" {
 
 #add the link of the ca in the s3 bucket to the api gateway custom domain name
 #Disable the default endpoint 
+#create draw and apply routes 
