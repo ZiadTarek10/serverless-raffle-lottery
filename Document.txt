@@ -31,7 +31,7 @@
 
 --------------------------------------------------------------------
 
-5- Host html pages on s3
+5- Host html pages on s3 and clound front since s3 doesn't support https
 
 
 

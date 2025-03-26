@@ -32,3 +32,8 @@ resource "aws_iam_role_policy_attachment" "cloud-watch-logs" {
   policy_arn = "arn:aws:iam::aws:policy/CloudWatchLogsFullAccess" # Full DynamoDB access
 }
 
+resource "aws_iam_role_policy_attachment" "dynamodbexecutionrole" {
+  role       = aws_iam_role.lambda_dynamodb_role.name
+  policy_arn = "arn:aws:iam::aws:policy/service-role/AWSLambdaDynamoDBExecutionRole" # Full DynamoDB Execution Role
+}
+

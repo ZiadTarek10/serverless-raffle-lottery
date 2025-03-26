@@ -1,5 +1,79 @@
 <html>
-    <head>
-        <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@3.3.7/dist/css/bootstrap.min.css" integrity="sha384-BVYiiSI">
-    </head>
+  <head>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <script>
+      const api_url = "https://api.areulucky.com/raffle/apply";
+
+      document.addEventListener('DOMContentLoaded', function() {
+        let btn = document.getElementById('btnSubmit');
+        btn.addEventListener("click", sendData);
+        
+        function sendData() {
+          let data = {
+            name: document.getElementById("txtName").value,
+            phone: document.getElementById("txtMobile").value,
+            email: document.getElementById("txtEmail").value
+          };
+          send(data);
+        }
+      });
+
+      function send(data) {
+    console.log(data);
+
+    window.fetch(api_url, {
+        method: 'POST',
+        mode: 'cors',
+        headers: {
+            "Content-Type": "application/json"
+        },
+        body: JSON.stringify(data)
+    })
+    .then(response => response.text())  // Process response as text
+    .then(data => {
+        console.log(data); 
+
+        if (typeof data === "string" && data.startsWith("Thanks")) {
+            document.getElementById("btnSubmit").disabled = true;
+        }
+        
+        document.getElementById("txtnote").innerHTML = data;
+    })
+    .catch(err => {
+        console.log('Fetch Error :-S', err);
+        document.getElementById("txtnote").innerHTML = "Error: " + err.message;
+    });
+}
+    </script>
+  </head>
+  
+  <body style="padding: 30px;">
+    <br><br>
+    <form>
+      <legend>Apply to the raffle</legend>
+      <br><br>
+      
+      <div class="mb-3">
+        <label for="txtName" class="form-label">Your Full Name</label>
+        <input id="txtName" type="text" placeholder="first last" class="form-control" required>
+      </div>
+
+      <div class="mb-3">
+        <label for="txtMobile" class="form-label">Mobile Number</label>
+        <input id="txtMobile" type="text" placeholder="011" class="form-control" required>
+      </div>
+
+      <div class="mb-3">
+        <label for="txtEmail" class="form-label">Email (important)</label>
+        <input id="txtEmail" type="email" placeholder="mail@server.com" class="form-control" required>
+      </div>
+
+      <button id="btnSubmit" class="btn btn-primary" type="button">Submit</button>
+      <br><br>
+      
+      <p id="txtnote" style="color: red;"></p>
+    </form>
+  </body>
 </html>

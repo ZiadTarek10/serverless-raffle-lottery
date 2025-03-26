@@ -9,6 +9,8 @@ resource "aws_acm_certificate" "cert" {
   }
 }
 
+
+
 #Create the record for the certificate in route53
 
 resource "aws_route53_record" "cert_validation" {
@@ -40,6 +42,13 @@ resource "aws_acm_certificate_validation" "cert_validation_record" {
 resource "aws_apigatewayv2_api" "api_raffle" {
   name          = "raffle"
   protocol_type = "HTTP"
+
+   cors_configuration {
+    allow_origins = ["http://areulucky.com.s3-website-us-east-1.amazonaws.com" , "https://areulucky.com"]
+    allow_methods = ["*"]
+    allow_headers = ["*"]
+    expose_headers = ["*"]
+  }
 }
 
 #Create the stage

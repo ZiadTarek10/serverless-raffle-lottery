@@ -1,3 +1,8 @@
 AWS mutual authentication
 https://aws.amazon.com/blogs/compute/introducing-mutual-tls-authentication-for-amazon-api-gateway/
 
+Hosting a static website on amazon s3
+https://docs.aws.amazon.com/AmazonS3/latest/userguide/HostingWebsiteOnS3Setup.html
+
+AWS SDK
+https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/example_dynamodb_Hello_section.html
