@@ -1,10 +1,10 @@
-import { DynamoDBClient } from "@aws-sdk/client-dynamodb";
-import { DynamoDBDocumentClient, ScanCommand, UpdateCommand } from "@aws-sdk/lib-dynamodb";
+const { DynamoDBClient } = require("@aws-sdk/client-dynamodb");
+const { DynamoDBDocumentClient, ScanCommand, UpdateCommand } = require("@aws-sdk/lib-dynamodb");
 
 const dynamo = new DynamoDBClient({ region: "us-east-1" });
 const client = DynamoDBDocumentClient.from(dynamo);
 
-export const handler = async (event) => {
+exports.handler = async (event) => {
     console.log("---devops90---start-handler");
     console.log("---devops90---event", JSON.stringify(event));
 
