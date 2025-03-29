@@ -1,5 +1,6 @@
-#the certificate
+#You should have a domain name or create one manually using route 53
 
+#the certificate
 resource "aws_acm_certificate" "cert" {
   domain_name       = "api.areulucky.com"
   validation_method = "DNS"
@@ -12,7 +13,6 @@ resource "aws_acm_certificate" "cert" {
 
 
 #Create the record for the certificate in route53
-
 resource "aws_route53_record" "cert_validation" {
   depends_on = [aws_acm_certificate.cert]
 
@@ -24,66 +24,67 @@ resource "aws_route53_record" "cert_validation" {
     }
   }
 
-  zone_id = "Z0844770XWSLLLJPO29E" 
+  zone_id = "Z0844770XWSLLLJPO29E"
   name    = each.value.name
   type    = each.value.type
   ttl     = 60
   records = [each.value.record]
 }
-#validat the certificate
 
+
+
+#validat the certificate
 resource "aws_acm_certificate_validation" "cert_validation_record" {
   certificate_arn         = aws_acm_certificate.cert.arn
   validation_record_fqdns = [for record in aws_route53_record.cert_validation : record.fqdn]
 }
 
 #Create HTTP API
-
 resource "aws_apigatewayv2_api" "api_raffle" {
   name          = "raffle"
   protocol_type = "HTTP"
 
-   cors_configuration {
-    allow_origins = ["http://areulucky.com.s3-website-us-east-1.amazonaws.com" , "https://areulucky.com"]
-    allow_methods = ["*"]
-    allow_headers = ["*"]
+  cors_configuration {
+    allow_origins  = ["http://areulucky.com.s3-website-us-east-1.amazonaws.com", "https://areulucky.com"]
+    allow_methods  = ["*"]
+    allow_headers  = ["*"]
     expose_headers = ["*"]
   }
 }
 
 #Create the stage
-
 resource "aws_apigatewayv2_stage" "dev_stage" {
-  api_id = aws_apigatewayv2_api.api_raffle.id
-  name   = "dev"
+  api_id      = aws_apigatewayv2_api.api_raffle.id
+  name        = "dev"
   auto_deploy = true
 }
 
 
 #Create custom domain name
-
 resource "aws_apigatewayv2_domain_name" "custom_domain_name" {
-  domain_name              = "api.areulucky.com"
+  domain_name = "api.areulucky.com"
   domain_name_configuration {
     certificate_arn = aws_acm_certificate_validation.cert_validation_record.certificate_arn
     endpoint_type   = "REGIONAL"
     security_policy = "TLS_1_2"
   }
   mutual_tls_authentication {
-    truststore_uri     = "s3://raffle-ca-api-gateway/RootCA.pem"
+    truststore_uri = "s3://raffle-ca-api-gateway/RootCA.pem"
   }
 }
 
 
 
-#Create the mapping
-
+#Create the mapping for the custom domain name
 resource "aws_apigatewayv2_api_mapping" "api_mappin_1" {
-  api_id      = aws_apigatewayv2_api.api_raffle.id
-  domain_name = aws_apigatewayv2_domain_name.custom_domain_name.id
-  stage       = aws_apigatewayv2_stage.dev_stage.id
+  api_id          = aws_apigatewayv2_api.api_raffle.id
+  domain_name     = aws_apigatewayv2_domain_name.custom_domain_name.id
+  stage           = aws_apigatewayv2_stage.dev_stage.id
   api_mapping_key = "raffle"
 }
 
+
 #Create route for the count function in the api
+
+
 #add the record of the custom domain name to the route53

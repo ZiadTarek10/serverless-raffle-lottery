@@ -118,14 +118,13 @@
         let api_base_url = "https://api.areulucky.com/raffle/";
 
         document.addEventListener('DOMContentLoaded', function () {
-
+            // Show count as soon as the page loads
             count();
 
             let btn = document.getElementById('btndraw');
             btn.addEventListener("click", sendData);
 
             function sendData() {
-
                 draw();
                 let x = document.getElementById("loader");
                 x.style.display = "block";
@@ -133,7 +132,6 @@
                     x.style.display = "none";
                     document.getElementById("winners").style.display = "block";
                 }, 3000);
-
             }
 
         }, false);
@@ -148,7 +146,12 @@
                     return response.json();
                 }).then(function (data) {
                     console.log(data);
-                    document.getElementById("count").innerHTML = data.count;
+                    let countElement = document.getElementById("count");
+                    if (countElement) {
+                        countElement.innerHTML = data.count;
+                    } else {
+                        console.log('Count element not found!');
+                    }
                 })
                 .catch(err => {
                     console.log('Fetch Error :-S', err);
@@ -156,7 +159,6 @@
         }
 
         function draw() {
-
             window.fetch(api_base_url + "draw",
                 {
                     method: 'GET',
@@ -194,7 +196,7 @@
     <br>
     <legend>Giveaway, Draw.</legend>
     <br>
-    <div id="count"></div>
+    <div id="count">Loading...</div>
     <div id="draw_done">-</div>
 
     <a id="btndraw" href="#" class="btn btn-primary" role="button">Draw</a>
@@ -211,4 +213,5 @@
     </div>
     <div id="winners"></div>
 </body>
+
 </html>

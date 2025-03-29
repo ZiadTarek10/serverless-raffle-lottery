@@ -1,8 +1,8 @@
 #Create DynamoDB table
 resource "aws_dynamodb_table" "dynamodb-table-lottery" {
-  name           = "dynamodb-table-lottery"
-  billing_mode   = "PAY_PER_REQUEST"
-  hash_key       = "email" # Primary key (hash key)
+  name         = "dynamodb-table-lottery"
+  billing_mode = "PAY_PER_REQUEST"
+  hash_key     = "email" # Primary key (hash key)
 
   attribute {
     name = "email"
@@ -10,6 +10,6 @@ resource "aws_dynamodb_table" "dynamodb-table-lottery" {
   }
 
   tags = {
-    Name        = "dynamodb-table-lottery"
+    Name = "dynamodb-table-lottery"
   }
 }

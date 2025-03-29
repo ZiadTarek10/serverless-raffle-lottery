@@ -17,7 +17,10 @@ exports.handler = async (event, context) => {
         const response = await client.send(command);
         console.log("---devops90---count", response.Count);
 
-        return  response.Count ;
+        // Return a JSON object that contains the count
+        return {
+            count: response.Count
+        };
     } catch (e) {
         console.error("---devops90---error", e);
         return { error: e.message };

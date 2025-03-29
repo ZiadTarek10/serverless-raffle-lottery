@@ -6,3 +6,6 @@ https://docs.aws.amazon.com/AmazonS3/latest/userguide/HostingWebsiteOnS3Setup.ht
 
 AWS SDK
 https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/example_dynamodb_Hello_section.html
+
+Understanding SSl
+https://aboutssl.org/ssl-guide/

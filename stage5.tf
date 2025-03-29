@@ -24,19 +24,18 @@ resource "aws_s3_bucket_website_configuration" "properties" {
 
 #upload the files to the bucket
 resource "aws_s3_object" "applyfile" {
-  bucket      = aws_s3_bucket.website.id
-  key         = "apply.html"
-  source      = "./apply.html"
+  bucket       = aws_s3_bucket.website.id
+  key          = "apply.html"
+  source       = "./apply.html"
   content_type = "text/html"
 }
 
 resource "aws_s3_object" "drawfile" {
-  bucket      = aws_s3_bucket.website.id
-  key         = "draw.html"
-  source      = "./draw.html"
+  bucket       = aws_s3_bucket.website.id
+  key          = "draw.html"
+  source       = "./draw.html"
   content_type = "text/html"
 }
-
 
 # Add a bucket policy that makes your bucket content publicly available
 resource "aws_s3_bucket_policy" "allow_access_from_another_account" {
@@ -44,19 +43,32 @@ resource "aws_s3_bucket_policy" "allow_access_from_another_account" {
   policy = data.aws_iam_policy_document.bucket_content_publicly_available.json
 }
 
-  data "aws_iam_policy_document" "bucket_content_publicly_available" {
-    statement {
-      sid       = "PublicReadGetObject"
-      effect    = "Allow"
-      principals {
-        type        = "AWS"
-        identifiers = ["*"]
-      }
-      actions   = ["s3:GetObject"]
-      resources = ["${aws_s3_bucket.website.arn}/*"]
+data "aws_iam_policy_document" "bucket_content_publicly_available" {
+  statement {
+    sid    = "PublicReadGetObject"
+    effect = "Allow"
+    principals {
+      type        = "AWS"
+      identifiers = ["*"]
     }
+    actions   = ["s3:GetObject"]
+    resources = ["${aws_s3_bucket.website.arn}/*"]
   }
+}
 
+resource "aws_s3_object" "applyhtml" {
+  bucket = "areulucky.com"
+  key    = "apply.html"
+  source = "./apply.html"
+}
+
+resource "aws_s3_object" "drawhtml" {
+  bucket = "areulucky.com"
+  key    = "draw.html"
+  source = "./draw.html"
+}
+
+#Create the certificate for the domain name areulucky.com
 resource "aws_acm_certificate" "cert2" {
   domain_name       = "areulucky.com"
   validation_method = "DNS"
@@ -67,7 +79,7 @@ resource "aws_acm_certificate" "cert2" {
 }
 
 #Create the record for the certificate in route53
-resource "aws_route53_record" "cert_validation2" {
+resource "aws_route53_record" "cert2_validation" {
   depends_on = [aws_acm_certificate.cert2]
 
   for_each = {
@@ -78,30 +90,118 @@ resource "aws_route53_record" "cert_validation2" {
     }
   }
 
-  zone_id = "Z0844770XWSLLLJPO29E" 
+  zone_id = "Z0844770XWSLLLJPO29E"
   name    = each.value.name
   type    = each.value.type
   ttl     = 60
   records = [each.value.record]
 }
-#validat the certificate
 
-resource "aws_acm_certificate_validation" "cert_validation_record2" {
+# Validate the ACM certificate
+resource "aws_acm_certificate_validation" "cert2_validation" {
   certificate_arn         = aws_acm_certificate.cert2.arn
-  validation_record_fqdns = [for record in aws_route53_record.cert_validation2 : record.fqdn]
+  validation_record_fqdns = [for record in aws_route53_record.cert2_validation : record.name]
 }
 
-resource "aws_s3_object" "applyhtml" {
-  bucket = "areulucky.com"
-  key    = "apply.html"
-  source = "./apply.html"
-}
-resource "aws_s3_object" "drawhtml" {
-  bucket = "areulucky.com"
-  key    = "draw.html"
-  source = "./draw.html"
+#Create cloudfront distribution without logging
+
+locals {
+  s3_origin_id = "myS3Origin"
 }
 
+resource "aws_cloudfront_distribution" "s3_distribution" {
+  origin {
+    domain_name              = aws_s3_bucket.website.bucket_regional_domain_name
+    origin_access_control_id = aws_cloudfront_origin_access_control.default.id
+    origin_id                = local.s3_origin_id
+  }
 
-#create cloudfront
-#create the record of the cloud front in route53
+  enabled             = true
+  default_root_object = "apply.html"
+
+  aliases = ["areulucky.com", "www.areulucky.com"]
+
+  default_cache_behavior {
+    allowed_methods  = ["DELETE", "GET", "HEAD", "OPTIONS", "PATCH", "POST", "PUT"]
+    cached_methods   = ["GET", "HEAD"]
+    target_origin_id = local.s3_origin_id
+
+    forwarded_values {
+      query_string = false
+
+      cookies {
+        forward = "none"
+      }
+    }
+
+    viewer_protocol_policy = "redirect-to-https"
+    min_ttl                = 0
+    default_ttl            = 3600
+    max_ttl                = 86400
+  }
+
+  # Cache behavior with precedence 0
+  ordered_cache_behavior {
+    path_pattern     = "/content/immutable/*"
+    allowed_methods  = ["GET", "HEAD", "OPTIONS"]
+    cached_methods   = ["GET", "HEAD", "OPTIONS"]
+    target_origin_id = local.s3_origin_id
+
+    forwarded_values {
+      query_string = false
+      headers      = ["Origin"]
+
+      cookies {
+        forward = "none"
+      }
+    }
+
+    min_ttl                = 0
+    default_ttl            = 86400
+    max_ttl                = 31536000
+    compress               = true
+    viewer_protocol_policy = "redirect-to-https"
+  }
+
+  # Cache behavior with precedence 1
+  ordered_cache_behavior {
+    path_pattern     = "/content/*"
+    allowed_methods  = ["GET", "HEAD", "OPTIONS"]
+    cached_methods   = ["GET", "HEAD"]
+    target_origin_id = local.s3_origin_id
+
+    forwarded_values {
+      query_string = false
+
+      cookies {
+        forward = "none"
+      }
+    }
+
+    min_ttl                = 0
+    default_ttl            = 3600
+    max_ttl                = 86400
+    compress               = true
+    viewer_protocol_policy = "redirect-to-https"
+  }
+
+  restrictions {
+    geo_restriction {
+      restriction_type = "none"
+    }
+  }
+
+  viewer_certificate {
+    acm_certificate_arn      = "arn:aws:acm:us-east-1:417650894786:certificate/e1581fb2-953c-4bd9-833e-e0f929b49350"
+    ssl_support_method       = "sni-only"
+    minimum_protocol_version = "TLSv1.2_2021"
+  }
+}
+
+resource "aws_cloudfront_origin_access_control" "default" {
+  name                              = "S3OriginAccessControl"
+  description                       = "OAC for S3 bucket"
+  origin_access_control_origin_type = "s3"
+  signing_behavior                  = "always"
+  signing_protocol                  = "sigv4"
+}
