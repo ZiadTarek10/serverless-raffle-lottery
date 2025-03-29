@@ -1,28 +1,28 @@
-#Creating the bucket
+# Create an S3 bucket to host the website
 resource "aws_s3_bucket" "website" {
   bucket = "areulucky.com"
 }
 
-#allow public access to the bucket
+# Allow public access to the S3 bucket
 resource "aws_s3_bucket_public_access_block" "public_access" {
   bucket = aws_s3_bucket.website.id
 
-  block_public_acls       = false
-  block_public_policy     = false
-  ignore_public_acls      = false
-  restrict_public_buckets = false
+  block_public_acls       = false  # Do not block public ACLs
+  block_public_policy     = false  # Allow bucket policies
+  ignore_public_acls      = false  # Do not ignore public ACLs
+  restrict_public_buckets = false  # Allow public access if policy allows it
 }
 
-#enable the website configuration
+# Enable website hosting on the S3 bucket
 resource "aws_s3_bucket_website_configuration" "properties" {
   bucket = aws_s3_bucket.website.id
 
   index_document {
-    suffix = "apply.html"
+    suffix = "apply.html"  # Define the default index page
   }
 }
 
-#upload the files to the bucket
+# Upload website files to the S3 bucket
 resource "aws_s3_object" "applyfile" {
   bucket       = aws_s3_bucket.website.id
   key          = "apply.html"
@@ -37,7 +37,7 @@ resource "aws_s3_object" "drawfile" {
   content_type = "text/html"
 }
 
-# Add a bucket policy that makes your bucket content publicly available
+# Define an S3 bucket policy to allow public read access
 resource "aws_s3_bucket_policy" "allow_access_from_another_account" {
   bucket = aws_s3_bucket.website.id
   policy = data.aws_iam_policy_document.bucket_content_publicly_available.json
@@ -49,36 +49,24 @@ data "aws_iam_policy_document" "bucket_content_publicly_available" {
     effect = "Allow"
     principals {
       type        = "AWS"
-      identifiers = ["*"]
+      identifiers = ["*"]  # Allow access from any entity
     }
-    actions   = ["s3:GetObject"]
+    actions   = ["s3:GetObject"]  # Allow read access to objects
     resources = ["${aws_s3_bucket.website.arn}/*"]
   }
 }
 
-resource "aws_s3_object" "applyhtml" {
-  bucket = "areulucky.com"
-  key    = "apply.html"
-  source = "./apply.html"
-}
-
-resource "aws_s3_object" "drawhtml" {
-  bucket = "areulucky.com"
-  key    = "draw.html"
-  source = "./draw.html"
-}
-
-#Create the certificate for the domain name areulucky.com
+# Create an SSL certificate for the domain (DNS validation)
 resource "aws_acm_certificate" "cert2" {
   domain_name       = "areulucky.com"
   validation_method = "DNS"
 
   lifecycle {
-    create_before_destroy = true
+    create_before_destroy = true  # Ensure the new cert is ready before replacing the old one
   }
 }
 
-#Create the record for the certificate in route53
+# Create Route 53 DNS records for SSL certificate validation
 resource "aws_route53_record" "cert2_validation" {
   depends_on = [aws_acm_certificate.cert2]
 
@@ -97,18 +85,18 @@ resource "aws_route53_record" "cert2_validation" {
   records = [each.value.record]
 }
 
-# Validate the ACM certificate
+# Validate the ACM certificate once DNS records are created
 resource "aws_acm_certificate_validation" "cert2_validation" {
   certificate_arn         = aws_acm_certificate.cert2.arn
   validation_record_fqdns = [for record in aws_route53_record.cert2_validation : record.name]
 }
 
-#Create cloudfront distribution without logging
-
+# Define a local variable for the S3 origin ID
 locals {
   s3_origin_id = "myS3Origin"
 }
 
+# Create a CloudFront distribution to serve content from S3
 resource "aws_cloudfront_distribution" "s3_distribution" {
   origin {
     domain_name              = aws_s3_bucket.website.bucket_regional_domain_name
@@ -117,10 +105,11 @@ resource "aws_cloudfront_distribution" "s3_distribution" {
   }
 
   enabled             = true
-  default_root_object = "apply.html"
+  default_root_object = "apply.html"  # Set the default page
 
   aliases = ["areulucky.com", "www.areulucky.com"]
 
+  # Default cache behavior for CloudFront
   default_cache_behavior {
     allowed_methods  = ["DELETE", "GET", "HEAD", "OPTIONS", "PATCH", "POST", "PUT"]
     cached_methods   = ["GET", "HEAD"]
@@ -140,7 +129,7 @@ resource "aws_cloudfront_distribution" "s3_distribution" {
     max_ttl                = 86400
   }
 
-  # Cache behavior with precedence 0
+  # Cache behavior for immutable content
   ordered_cache_behavior {
     path_pattern     = "/content/immutable/*"
     allowed_methods  = ["GET", "HEAD", "OPTIONS"]
@@ -163,7 +152,7 @@ resource "aws_cloudfront_distribution" "s3_distribution" {
     viewer_protocol_policy = "redirect-to-https"
   }
 
-  # Cache behavior with precedence 1
+  # Cache behavior for other content
   ordered_cache_behavior {
     path_pattern     = "/content/*"
     allowed_methods  = ["GET", "HEAD", "OPTIONS"]
@@ -187,17 +176,18 @@ resource "aws_cloudfront_distribution" "s3_distribution" {
 
   restrictions {
     geo_restriction {
-      restriction_type = "none"
+      restriction_type = "none"  # No geographic restrictions
     }
   }
 
   viewer_certificate {
     acm_certificate_arn      = "arn:aws:acm:us-east-1:417650894786:certificate/e1581fb2-953c-4bd9-833e-e0f929b49350"
-    ssl_support_method       = "sni-only"
+    ssl_support_method       = "sni-only"  # Use SNI to support multiple domains
     minimum_protocol_version = "TLSv1.2_2021"
   }
 }
 
+# Configure CloudFront Origin Access Control (OAC) to restrict S3 access
 resource "aws_cloudfront_origin_access_control" "default" {
   name                              = "S3OriginAccessControl"
   description                       = "OAC for S3 bucket"

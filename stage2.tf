@@ -1,5 +1,8 @@
+# Create an IAM Role for AWS Lambda to interact with DynamoDB
 resource "aws_iam_role" "lambda_dynamodb_role" {
   name = "lambda_dynamodb_role"
+  
+  # Define the trust policy that allows Lambda to assume this role
   assume_role_policy = jsonencode({
     Version = "2012-10-17"
     Statement = [{
@@ -12,40 +15,37 @@ resource "aws_iam_role" "lambda_dynamodb_role" {
   })
 }
 
-
-# Attach the AWS Lambda Basic Execution Role, which allows logging to CloudWatch
+# Attach the AWS Lambda Basic Execution Role, allowing logging to CloudWatch
 resource "aws_iam_role_policy_attachment" "lambda_basic_execution" {
   role       = aws_iam_role.lambda_dynamodb_role.name
-  policy_arn = "arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole" # CloudWatch logs
+  policy_arn = "arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole" # Allows logging to CloudWatch
 }
 
-# Attach full access to DynamoDB for Lambda 
+# Attach full access to DynamoDB for Lambda
 resource "aws_iam_role_policy_attachment" "lambda_dynamodb_access" {
   role       = aws_iam_role.lambda_dynamodb_role.name
-  policy_arn = "arn:aws:iam::aws:policy/AmazonDynamoDBFullAccess" # Full DynamoDB access
+  policy_arn = "arn:aws:iam::aws:policy/AmazonDynamoDBFullAccess" # Grants full access to DynamoDB
 }
 
-# Attach a policy for invoking Lambda from DynamoDB
+# Attach a policy for Lambda invocation from DynamoDB Streams
 resource "aws_iam_role_policy_attachment" "lambda-invocatoion" {
   role       = aws_iam_role.lambda_dynamodb_role.name
-  policy_arn = "arn:aws:iam::aws:policy/AWSLambdaInvocation-DynamoDB" # Full DynamoDB access
+  policy_arn = "arn:aws:iam::aws:policy/AWSLambdaInvocation-DynamoDB" # Allows DynamoDB to trigger Lambda
 }
 
-# Attach full access to CloudWatch Logs
+# Attach full access to CloudWatch Logs for debugging and monitoring
 resource "aws_iam_role_policy_attachment" "cloud-watch-logs" {
   role       = aws_iam_role.lambda_dynamodb_role.name
-  policy_arn = "arn:aws:iam::aws:policy/CloudWatchLogsFullAccess" # Full DynamoDB access
+  policy_arn = "arn:aws:iam::aws:policy/CloudWatchLogsFullAccess" # Full access to CloudWatch Logs
 }
 
-# Attach the AWS Lambda DynamoDB Execution Role (grants necessary permissions for Lambda to interact with DynamoDB)
+# Attach the AWS Lambda DynamoDB Execution Role
 resource "aws_iam_role_policy_attachment" "dynamodbexecutionrole" {
   role       = aws_iam_role.lambda_dynamodb_role.name
-  policy_arn = "arn:aws:iam::aws:policy/service-role/AWSLambdaDynamoDBExecutionRole" # Full DynamoDB Execution Role
+  policy_arn = "arn:aws:iam::aws:policy/service-role/AWSLambdaDynamoDBExecutionRole" # Grants necessary permissions for Lambda to interact with DynamoDB
 }
 
-
-// t
-
+# Package the Lambda function files as ZIP archives
 data "archive_file" "lambda-apply" {
   type        = "zip"
   source_file = "apply-function.js"
@@ -64,6 +64,7 @@ data "archive_file" "lambda-draw" {
   output_path = "lambda-draw-function.zip"
 }
 
+# Create AWS Lambda function for the 'apply' functionality
 resource "aws_lambda_function" "apply-function" {
   filename         = "lambda-apply-function.zip"
   function_name    = "apply-function"
@@ -72,6 +73,7 @@ resource "aws_lambda_function" "apply-function" {
   source_code_hash = data.archive_file.lambda-apply.output_base64sha256
   runtime          = "nodejs18.x"
 
+  # Define environment variables
   environment {
     variables = {
       foo = "bar"
@@ -79,6 +81,7 @@ resource "aws_lambda_function" "apply-function" {
   }
 }
 
+# Create AWS Lambda function for the 'count' functionality
 resource "aws_lambda_function" "count-function" {
   filename         = "lambda-count-function.zip"
   function_name    = "count-function"
@@ -94,6 +97,7 @@ resource "aws_lambda_function" "count-function" {
   }
 }
 
+# Create AWS Lambda function for the 'draw' functionality
 resource "aws_lambda_function" "draw-function" {
   filename         = "lambda-draw-function.zip"
   function_name    = "draw-function"
@@ -109,7 +113,7 @@ resource "aws_lambda_function" "draw-function" {
   }
 }
 
-
+# Define a custom IAM policy for Lambda to perform CRUD operations on DynamoDB
 resource "aws_iam_policy" "lambda_dynamodb_policy" {
   name        = "lambda-dynamodb-policy"
   description = "Policy for Lambda to access DynamoDB"
@@ -133,7 +137,7 @@ resource "aws_iam_policy" "lambda_dynamodb_policy" {
   })
 }
 
-
+# Attach the custom IAM policy to the Lambda IAM role
 resource "aws_iam_role_policy_attachment" "lambda_dynamodb_attach" {
   policy_arn = aws_iam_policy.lambda_dynamodb_policy.arn
   role       = aws_iam_role.lambda_dynamodb_role.name
