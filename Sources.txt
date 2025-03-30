@@ -9,3 +9,4 @@ https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/example_dynamod
 
 Understanding SSl
 https://aboutssl.org/ssl-guide/
+https://aws.amazon.com/what-is/ssl-certificate/
