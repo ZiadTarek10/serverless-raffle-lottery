@@ -1,4 +1,5 @@
 .terraform/
+.terraform.*
 githubauth.pub
 RootCA.pem
 
