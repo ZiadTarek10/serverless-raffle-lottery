@@ -48,19 +48,19 @@ resource "aws_iam_role_policy_attachment" "dynamodbexecutionrole" {
 # Package the Lambda function files as ZIP archives
 data "archive_file" "lambda-apply" {
   type        = "zip"
-  source_file = "apply-function.js"
+  source_file = "./Code/apply-function.js"
   output_path = "lambda-apply-function.zip"
 }
 
 data "archive_file" "lambda-count" {
   type        = "zip"
-  source_file = "count-function.js"
+  source_file = "./Code/count-function.js"
   output_path = "lambda-count-function.zip"
 }
 
 data "archive_file" "lambda-draw" {
   type        = "zip"
-  source_file = "draw-function.js"
+  source_file = "./Code/draw-function.js"
   output_path = "lambda-draw-function.zip"
 }
 

@@ -26,14 +26,14 @@ resource "aws_s3_bucket_website_configuration" "properties" {
 resource "aws_s3_object" "applyfile" {
   bucket       = aws_s3_bucket.website.id
   key          = "apply.html"
-  source       = "./apply.html"
+  source       = "./Code/apply.html"
   content_type = "text/html"
 }
 
 resource "aws_s3_object" "drawfile" {
   bucket       = aws_s3_bucket.website.id
   key          = "draw.html"
-  source       = "./draw.html"
+  source       = "./Code/draw.html"
   content_type = "text/html"
 }
 
